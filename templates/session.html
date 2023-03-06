@@ -2,22 +2,64 @@
   <html lang="en">
   <head>
     <title>Flask_Chat_App</title>
+    <style>
+            div.message_holder {
+                margin:4px, 4px;
+                padding:4px;
+                border: thin solid black;
+                /*background-color: green;*/
+                width: 70%;
+                height: 300px;
+                overflow-x: hidden;
+                overflow-y: auto;
+                text-align:justify;
+            }
+        </style>
   </head>
   <body>
-
-    <h3 style='color: #ccc;font-size: 30px;'>No message yet..</h3>
-    <div class="message_holder"></div>
-
+    <label for="history"><b style="color: #000"> Chat history: </b></label><br>
+    <div id="message_holder" class="message_holder">
+      <h3 style='color: #ccc;font-size: 30px;'>No message yet...</h3>
+    </div>
+   <!--  <textarea id="history" rows="30" cols="50" name="chat_history" class="wysiwyg">
+      <h3 style='color: #ccc;font-size: 30px;'>No message yet..</h3>
+    </textarea> -->
+    <br />
     <form action="" method="POST">
-      <input type="text" class="username" placeholder="User Name"/>
-      <input type="text" class="message" placeholder="Messages"/>
-      <input type="submit"/>
+      <label for="username"><b style="color: #000"> Human name: </b></label><br>
+      <input type="text" id="username" class="username" placeholder="User Name" value="Human" />
+      <!-- <input type="text" class="message" placeholder="Messages"/> -->
+      <br />
+      <label for="comment"><b style="color: #000"> Human comment: </b></label><br>
+      <textarea id="comment" rows="10" cols="100" name="comment" class="message"></textarea>
+      <br />
+      <input type="submit" id="submitBtn" />
     </form>
+    <br>
+    <p id="myPara" hidden></p>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"></script> -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <!-- <script src="https://cdn.ckeditor.com/4.20.2/basic/ckeditor.js"></script> -->
     <script type="text/javascript">
+      // window.onload = function () {
+      //     CKEDITOR.replaceAll('wysiwyg');
+      // };
+
+      // CKEDITOR.on("instanceReady", function(event)
+      // {
+      //    CKEDITOR.instances["history"].setReadOnly(true);
+      //    CKEDITOR.config.width = '70%'
+      // });
+
+      // window.setInterval(function() {
+      // var elem = document.getElementById('message_holder');
+      //   elem.scrollTop = elem.scrollHeight;
+      // }, 5000);
+
       var socket = io.connect('http://' + document.domain + ':' + location.port);
 
       socket.on( 'connect', function() {
@@ -27,21 +69,46 @@
         var form = $( 'form' ).on( 'submit', function( e ) {
           e.preventDefault()
           let user_name = $( 'input.username' ).val()
-          let user_input = $( 'input.message' ).val()
+          let user_input = $( 'textarea.message' ).val()
+          let conversation_id = document.getElementById("myPara").innerHTML
           socket.emit( 'my event', {
             user_name : user_name,
-            message : user_input
+            message : user_input,
+            conversation_id: conversation_id
           } )
-          $( 'input.message' ).val( '' ).focus()
+          $( 'textarea.message' ).val( '' ).focus()
+          document.getElementById('submitBtn').disabled = true
         } )
       } )
       socket.on( 'my response', function( msg ) {
         console.log( msg )
+
         if( typeof msg.user_name !== 'undefined' ) {
+          var messages = msg.message.split('\n')
+
           $( 'h3' ).remove()
-          $( 'div.message_holder' ).append( '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>' )
+          // CKEDITOR.instances['history'].setReadOnly(false)
+          // CKEDITOR.instances['history'].insertHtml('<b style="color: #000">'+msg.user_name + ': '+'</b> '+ messages.join('<br />') +'</div><br />')
+          // CKEDITOR.instances['history'].setReadOnly(true)
+          div_message_holder = $( 'div.message_holder' )
+          div_message_holder.append( '<div><b style="color: #000">'+msg.user_name + ': '+'</b> '+ messages.join('<br />') +'</div><br />' )
+
+          div_message_holder.animate({scrollTop: div_message_holder.prop("scrollHeight")}, 500);
+          // div_message_holder.scrollTop = div_message_holder.scrollHeight;
+          // if( typeof $( 'div.message_holder' ).lastElementChild.scrollIntoView !== 'undefined' ) {
+          //   $( 'div.message_holder' ).lastElementChild.scrollIntoView({ behavior: 'smooth' });
+          // }
+          document.getElementById("myPara").innerHTML = msg.conversation_id
+
+          document.getElementById('submitBtn').disabled = false
+          $( 'textarea.message' ).val( '' ).focus()
         }
       })
+
+      // var submitBtn = document.getElementById('submitBtn')
+      // submitBtn.value = submitBtn.value + '(CTRL + Enter)'
+      document.getElementById("comment").onkeydown= e => (e.key=="Enter" && e.ctrlKey) ? document.getElementById("submitBtn").click() : 1
+      $( 'textarea.message' ).focus()
     </script>
 
   </body>

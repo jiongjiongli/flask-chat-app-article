@@ -1,5 +1,9 @@
-Flask==0.12.2
+Flask
 flask-socketio
-eventlet==0.17.4
-gunicorn==18.0.0
+eventlet
+gunicorn
 
+httpx
+OpenAIAuth
+prompt-toolkit
+requests
